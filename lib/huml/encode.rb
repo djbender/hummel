@@ -11,7 +11,7 @@ module Huml
         lines = []
         lines.concat(["%HUML v0.1.0", ""]) if cfg[:include_version]
 
-        to_value(obj, 0, lines, true)
+        lines.concat(encode_value(obj, 0, true))
         lines << "" # Ensure document ends with newline
 
         lines.join("\n")
@@ -21,21 +21,21 @@ module Huml
 
       # Core encoding methods
 
-      # Encode a value to HUML format
-      def to_value(value, indent, lines, is_root_level = false)
-        return lines[-1] += "null" if value.nil?
+      # Encode a value to HUML format - returns array of lines
+      def encode_value(value, indent, is_root_level = false)
+        return ["null"] if value.nil?
 
         case value
         when TrueClass, FalseClass
-          lines[-1] += value.to_s
+          [value.to_s]
         when Numeric
-          lines[-1] += format_number(value)
+          [format_number(value)]
         when String
-          to_string(value, indent, lines)
+          encode_string(value, indent)
         when Array
-          to_array(value, indent, lines, is_root_level)
+          encode_array(value, indent, is_root_level)
         when Hash
-          to_object(value, indent, lines, is_root_level)
+          encode_object(value, indent, is_root_level)
         else
           raise ArgumentError, "Unsupported type: #{value.class}"
         end
@@ -52,45 +52,54 @@ module Huml
         num.to_s
       end
 
-      # Encode a string value
-      def to_string(str, indent, lines)
-        unless str.include?("\n")
-          # Single-line string - use JSON for proper escaping
-          lines[-1] += str.to_json
-          return
-        end
+      # Encode a string value - returns array of lines
+      def encode_string(str, indent)
+        return [str.to_json] unless str.include?("\n")
 
         # Multi-line string
-        lines[-1] += "```"
         str_lines = str.split("\n")
-        str_lines.pop if str_lines.last&.empty? # Remove empty last line if string ends with newline
+        str_lines.pop if str_lines.last&.empty?
 
-        str_lines.each { |line| lines << "#{' ' * indent}#{line}" }
-        lines << "#{' ' * (indent - 2)}```"
+        ["```"] + str_lines.map { |line| "#{' ' * indent}#{line}" } + ["#{' ' * (indent - 2)}```"]
       end
 
-      # Encode an array value
-      def to_array(arr, indent, lines, is_root_level = false)
-        return lines[-1] += "[]" if arr.empty?
+      # Encode an array value - returns array of lines
+      def encode_array(arr, indent, is_root_level = false)
+        return ["[]"] if arr.empty?
 
         item_indent = is_root_level ? 0 : indent
 
-        arr.each do |item|
-          lines << "#{' ' * item_indent}- "
-          lines[-1] += "::" if vector?(item)
-          to_value(item, vector?(item) ? item_indent + 2 : item_indent, lines)
+        arr.flat_map do |item|
+          item_lines = encode_value(item, item_indent + 2)
+
+          if vector?(item) && !item.empty?
+            # Non-empty vector: "- ::" on one line, value on next lines
+            ["#{' ' * item_indent}- ::"] + item_lines
+          else
+            # Scalar or empty vector: "- value" on same line
+            ["#{' ' * item_indent}- #{item_lines.first}"] + item_lines[1..]
+          end
         end
       end
 
-      # Encode an object value
-      def to_object(obj, indent, lines, is_root_level = false)
-        return lines[-1] += "{}" if obj.empty?
+      # Encode an object value - returns array of lines
+      def encode_object(obj, indent, is_root_level = false)
+        return ["{}"] if obj.empty?
 
-        obj.sort_by { |key, _| key.to_s }.each do |key, value|
-          key_indent = is_root_level ? 0 : indent
-          lines << "#{' ' * key_indent}#{quote_key(key)}"
-          lines[-1] += vector?(value) && value.empty? ? ":: " : (vector?(value) ? "::" : ": ")
-          to_value(value, key_indent + 2, lines)
+        key_indent = is_root_level ? 0 : indent
+
+        obj.sort_by { |key, _| key.to_s }.flat_map do |key, value|
+          is_vec = vector?(value)
+          value_lines = encode_value(value, key_indent + 2)
+
+          if is_vec && !value.empty?
+            # Non-empty vector: key:: on one line, value on next lines
+            ["#{' ' * key_indent}#{quote_key(key)}::"] + value_lines
+          else
+            # Scalar or empty vector: combine key and value on first line
+            separator = is_vec ? ":: " : ": "
+            ["#{' ' * key_indent}#{quote_key(key)}#{separator}#{value_lines.first}"] + value_lines[1..]
+          end
         end
       end
 

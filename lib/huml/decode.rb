@@ -686,7 +686,7 @@ module Huml
       advance(1)
 
       if !done? && data[pos] == " "
-        raise error("expected signle space #{context}, found multiple")
+        raise error("expected single space #{context}, found multiple")
       end
     end
 
