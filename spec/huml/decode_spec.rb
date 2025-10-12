@@ -25,7 +25,7 @@ RSpec.describe Huml::Decode do
   end
 
   context "Documents" do
-    Dir.glob("./tests/documents/mixed.huml").each do |file_path|
+    Dir.glob("./tests/documents/*.huml").each do |file_path|
       it "testing #{File.basename(file_path)}" do
         File.open(file_path) do |file|
           huml = Huml::Decode.parse(file.read)

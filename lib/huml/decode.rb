@@ -72,31 +72,19 @@ module Huml
       "v" => "\v"
     }
 
-
-    # rubocop:disable Style/StringLiterals
     NUMBER_BASE_PREFIXES = [
-      ['0x', 16],
-      ['0o', 8],
-      ['0b', 2]
+      ["0x", 16],
+      ["0o", 8],
+      ["0b", 2]
     ]
-    # rubocop:enable Style/StringLiterals
 
-    attr_reader :data, :pos, :line
+    attr_reader :data
+    attr_accessor :pos, :line
 
     def initialize(data)
       @data = data
       @pos = 0
       @line = 1
-    end
-
-    def pos=(value)
-      # puts "updating @pos: #{value} from #{caller(1..1).first}"
-      @pos = value
-    end
-
-    def line=(value)
-      # puts "updating @line: #{value} from #{caller(1..1).first}"
-      @line = value
     end
 
     def parse
@@ -728,7 +716,7 @@ module Huml
     end
 
     def line_start
-      if 0 < self.pos && self.pos <= data.length && data[self.pos - 1] == "\n" # rubocop:disable Style/YodaCondition
+      if self.pos > 0 && self.pos <= data.length && data[self.pos - 1] == "\n"
         self.pos
       else
         return 0 if self.pos <= 0 # prevent -1 array access wrap arounds
