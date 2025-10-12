@@ -25,7 +25,7 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
 
-      - run: git submodule init
+      - run: git submodule update --init
 
       - name: Run the default task
         run: bundle exec rake
