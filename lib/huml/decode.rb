@@ -1,27 +1,3 @@
-require "byebug"
-
-module NoNegativeIndex
-  refine Array do
-    def [](*args)
-      first_arg = args.first
-      if first_arg.is_a?(Integer) && first_arg < 0
-        raise ArgumentError, "Negative indices are not allowed: #{first_arg}"
-      end
-      super
-    end
-  end
-
-  refine String do
-    def [](*args)
-      first_arg = args.first
-      if first_arg.is_a?(Integer) && first_arg < 0
-        raise ArgumentError, "Negative indices are not allowed: #{first_arg}"
-      end
-      super
-    end
-  end
-end
-
 module Huml
   module Decode
     def self.parse(input)
@@ -33,8 +9,6 @@ module Huml
   end
 
   class Parser
-    using NoNegativeIndex
-
     class ParseError < Huml::Decode::Error
       attr_reader :line
 

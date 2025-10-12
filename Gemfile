@@ -13,5 +13,6 @@ group :development do
 end
 
 group :development, :test do
+  gem "simplecov", "~> 0.22.0"
   gem "rspec", "~> 3.0"
 end

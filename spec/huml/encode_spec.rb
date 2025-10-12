@@ -23,6 +23,28 @@ RSpec.describe Huml::Encode do
       expect(out).to eq(res_json)
     end
   end
+
+  context "Branch coverage tests" do
+    it "includes version header when include_version is true" do
+      result = Huml::Encode.stringify("test", include_version: true)
+      expect(result).to start_with("%HUML v0.1.0\n")
+    end
+
+    it "encodes NaN correctly" do
+      result = Huml::Encode.stringify(Float::NAN)
+      expect(result).to include("nan")
+    end
+
+    it "encodes positive infinity correctly" do
+      result = Huml::Encode.stringify(Float::INFINITY)
+      expect(result).to include("inf")
+    end
+
+    it "encodes negative infinity correctly" do
+      result = Huml::Encode.stringify(-Float::INFINITY)
+      expect(result).to include("-inf")
+    end
+  end
 end
 
 def normalize_to_json(obj)

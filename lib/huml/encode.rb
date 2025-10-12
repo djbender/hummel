@@ -58,9 +58,9 @@ module Huml
 
         # Multi-line string
         str_lines = str.split("\n")
-        str_lines.pop if str_lines.last&.empty?
+        str_lines.pop if str_lines.last && str_lines.last.empty?
 
-        ["```"] + str_lines.map { |line| "#{' ' * indent}#{line}" } + ["#{' ' * (indent - 2)}```"]
+        ["```"] + str_lines.map { |line| "#{" " * indent}#{line}" } + ["#{" " * (indent - 2)}```"]
       end
 
       # Encode an array value - returns array of lines
@@ -74,10 +74,10 @@ module Huml
 
           if vector?(item) && !item.empty?
             # Non-empty vector: "- ::" on one line, value on next lines
-            ["#{' ' * item_indent}- ::"] + item_lines
+            ["#{" " * item_indent}- ::"] + item_lines
           else
             # Scalar or empty vector: "- value" on same line
-            ["#{' ' * item_indent}- #{item_lines.first}"] + item_lines[1..]
+            ["#{" " * item_indent}- #{item_lines.first}"] + item_lines[1..]
           end
         end
       end
@@ -94,11 +94,11 @@ module Huml
 
           if is_vec && !value.empty?
             # Non-empty vector: key:: on one line, value on next lines
-            ["#{' ' * key_indent}#{quote_key(key)}::"] + value_lines
+            ["#{" " * key_indent}#{quote_key(key)}::"] + value_lines
           else
             # Scalar or empty vector: combine key and value on first line
             separator = is_vec ? ":: " : ": "
-            ["#{' ' * key_indent}#{quote_key(key)}#{separator}#{value_lines.first}"] + value_lines[1..]
+            ["#{" " * key_indent}#{quote_key(key)}#{separator}#{value_lines.first}"] + value_lines[1..]
           end
         end
       end
