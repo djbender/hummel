@@ -17,7 +17,7 @@ RSpec.describe Huml::Decode do
       File.open(file_path) do |file|
         tests = JSON.parse(file.read)
         tests.each_with_index do |test_case, i|
-          test_name = "line ${i +1}: #{test_case.fetch("name")}"
+          test_name = "line #{i + 1}: #{test_case.fetch("name")}"
           it_behaves_like "a decoded HUML string", test_name, test_case.fetch("input"), test_case.fetch("error")
         end
       end

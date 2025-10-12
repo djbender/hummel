@@ -35,7 +35,14 @@ module Huml
   class Parser
     using NoNegativeIndex
 
-    class ParseError < StandardError; end
+    class ParseError < Huml::Decode::Error
+      attr_reader :line
+
+      def initialize(message, line)
+        @line = line
+        super("line #{line}: #{message}")
+      end
+    end
 
     TYPES = {
       INLINE_DICT: 1,
@@ -49,20 +56,22 @@ module Huml
     SPECIAL_VALUES = [
       ["true", true],
       ["false", false],
-      ["null", nil]
-      # maybe nan, inf?
+      ["null", nil],
+      ["nan", Float::NAN],
+      ["inf", Float::INFINITY]
     ]
 
     ESCAPE_MAP = {
-      '"': '"',
-      # '\': '\\',
-      '/': '/' # rubocop:disable Style/StringLiterals, Style/QuotedSymbols
-      # n: '\n',
-      # t: '\t',
-      # r: '\r',
-      # f: '\f',
-      # v: '\v'
+      '"' => '"',
+      "\\" => "\\",
+      "/" => "/",
+      "n" => "\n",
+      "t" => "\t",
+      "r" => "\r",
+      "f" => "\f",
+      "v" => "\v"
     }
+
 
     # rubocop:disable Style/StringLiterals
     NUMBER_BASE_PREFIXES = [
@@ -85,14 +94,69 @@ module Huml
       @pos = value
     end
 
+    def line=(value)
+      # puts "updating @line: #{value} from #{caller(1..1).first}"
+      @line = value
+    end
+
     def parse
+      raise error("empty document is undefined") if data.empty?
+
+      if peek_string("%HUML")
+        advance(5)
+
+        if !done? && data[pos] == " "
+          advance(1)
+
+          # parse version string
+          starting_pos = pos
+          while !done? && ![" ", "\n", "#"].include?(data[pos])
+            self.pos += 1
+          end
+
+          if pos > starting_pos
+            version = data[starting_pos...pos]
+            if version != "v0.1.0"
+              raise error("unsupported version '#{version}'. expected 'v0.1.0'")
+            end
+          end
+        end
+
+        consume_line
+      end
+
       skip_blank_lines
+
+      raise error("empty doc is undefined") if done?
+      raise error("root element must not be indented") if current_indent != 0
+      raise error("'::' indicator not allowed at document root") if peek_string("::")
+      raise error("':' indicator not allowed at document root") if peek_string(":") && !key_value_pair?
+
       type_handlers = {
         TYPES.fetch(:INLINE_DICT) => -> {
           assert_root_end(parse_inline_vector_contents(TYPES[:INLINE_DICT]), "root inline dict")
         },
         TYPES[:MULTILINE_DICT] => -> {
           parse_multiline_dict(0)
+        },
+        TYPES[:EMPTY_LIST] => -> {
+          advance(2)
+          consume_line
+          assert_root_end([], "root list")
+        },
+        TYPES[:EMPTY_DICT] => -> {
+          advance(2)
+          consume_line
+          assert_root_end({}, "root dict")
+        },
+        TYPES[:MULTILINE_LIST] => -> {
+          parse_multiline_list(0)
+        },
+        TYPES[:INLINE_LIST] => -> {
+          assert_root_end(
+            parse_inline_vector_contents(TYPES.fetch(:INLINE_LIST)),
+            "root inline list"
+          )
         },
         TYPES[:SCALAR] => -> {
           val = parse_value(0)
@@ -118,7 +182,11 @@ module Huml
     end
 
     def assert_root_end(val, description)
-      throw IncompleteMethod.new(__method__)
+      skip_blank_lines
+      unless done?
+        raise error("unexpected content after #{description}")
+      end
+      val
     end
 
     def parse_multiline_dict(indent)
@@ -130,17 +198,17 @@ module Huml
         break if current_indent < indent
 
         if current_indent != indent
-          raise ParseError.new("bad indent #{current_indent}, expected #{indent}")
+          raise error("bad indent #{current_indent}, expected #{indent}")
         end
 
         unless key_start?
-          raise ParseError.new("invalid character '#{data[pos]}', expected key")
+          raise error("invalid character '#{data[pos]}', expected key")
         end
 
         key = parse_key
 
         if result.include?(key)
-          raise ParseError.new("duplicat key '#{key}' in dict")
+          raise error("duplicat key '#{key}' in dict")
         end
 
         indicator = parse_indicator
@@ -163,14 +231,42 @@ module Huml
     end
 
     def parse_multiline_list(indent)
-      throw IncompleteMethod.new(__method__)
+      result = []
+
+      loop do
+        skip_blank_lines
+        break if done?
+        break if current_indent < indent
+
+        if current_indent != indent
+          raise error("bad indent #{current_indent}, expected #{indent}")
+        end
+
+        break if data[pos] != "-"
+
+        advance(1)
+        assert_space("after '-'")
+
+        result << if peek_string("::")
+          # nested vector
+          advance(2)
+          parse_vector(current_indent + 2)
+        else
+          # scalar value
+          parse_value(current_indent).tap do
+            consume_line
+          end
+        end
+      end
+
+      result
     end
 
     def multiline_vector_type(indent)
       skip_blank_lines
 
       if done? || current_indent < indent
-        raise ParseError.new("ambiguous empty vector after '::'. Use [] or {}.")
+        raise error("ambiguous empty vector after '::'. Use [] or {}.")
       end
 
       if data[pos] == "-"
@@ -224,22 +320,24 @@ module Huml
         []
       end
 
+      @first = nil  # Reset for each new inline vector
+
       while !done? && data[pos] != "\n" && data[pos] != "#"
         skip_first do
           expect_comma
         end
 
-        if type == TYPES(:INLINE_DICT)
+        if type == TYPES.fetch(:INLINE_DICT)
           key = parse_key
           if done? || data[pos] != ":"
-            raise ParseError.new("expected ':' in inline dict")
+            raise error("expected ':' in inline dict")
           end
 
           advance(1)
           assert_space("in inline dict")
 
-          if result.inlude?(key)
-            raise ParseError("duplicate key '#{key}' in dict")
+          if result.include?(key)
+            raise error("duplicate key '#{key}' in dict")
           end
 
           result[key] = parse_value(0)
@@ -276,7 +374,7 @@ module Huml
       end
 
       if self.pos == start
-        raise ParseError.new("expected a key")
+        raise error("expected a key")
       end
 
       data[start...self.pos]
@@ -284,7 +382,7 @@ module Huml
 
     def parse_indicator
       if done? || data[pos] != ":"
-        raise ParseError.new("expected ':' or '::' after key")
+        raise error("expected ':' or '::' after key")
       end
 
       advance(1)
@@ -299,7 +397,7 @@ module Huml
 
     def parse_value(key_indent)
       if done?
-        raise ParseError.new("unexpected end of input, expected a value")
+        raise error("unexpected end of input, expected a value")
       end
       character = data[self.pos]
 
@@ -320,25 +418,23 @@ module Huml
 
       if character == "+"
         advance(1)
-        # TODO: need to figure out infitnity
-        # if peek_string('inf')
-        #   advance(3)
-        #   return Infinity
-        # end
+        if peek_string("inf")
+          advance(3)
+          return Float::INFINITY
+        end
 
         if digit?(peek_char(self.pos))
           self.pos -= 1
           return parse_number
         end
-        raise ParseError.new("invalid character after '+'")
+        raise error("invalid character after '+'")
       end
 
       if character == "-"
         advance(1)
-        # TODO: figure out infinity
         if peek_string("inf")
           advance(3)
-          return -Infinity
+          return -Float::INFINITY
         end
 
         if digit?(peek_char(self.pos))
@@ -346,20 +442,20 @@ module Huml
           return parse_number
         end
 
-        raise ParseError.new("invalid character after '-'")
+        raise error("invalid character after '-'")
       end
 
       if digit?(character)
         return parse_number
       end
 
-      raise ParseError.new("unexpected chracter #{character} when parsing value")
+      raise error("unexpected character '#{character}' when parsing value")
     end
 
     def parse_string
       advance(1)
 
-      result = ''
+      result = ""
       until done?
         character = data[pos]
 
@@ -368,11 +464,11 @@ module Huml
           advance(1)
           return result
         when "\n"
-          raise ParseError.new("newlines not allowed in single-line strings")
+          raise error("newlines not allowed in single-line strings")
         when "\\"
           advance(1)
           if done?
-            raise ParseError.new("incomplete escape sequence")
+            raise error("incomplete escape sequence")
           end
 
           escape = data[pos]
@@ -380,7 +476,7 @@ module Huml
           if ESCAPE_MAP.include?(escape)
             result << ESCAPE_MAP.fetch(escape)
           else
-            raise ParseError.new("invalid escape character '\\#{escape}'")
+            raise error("invalid escape character '\\#{escape}'")
           end
         else
           result << character
@@ -389,11 +485,60 @@ module Huml
         advance(1)
       end
 
-      raise ParseError.new("unclosed string")
+      raise error("unclosed string")
     end
 
     def parse_multiline_string(key_indent, preserve_spaces)
-      throw IncompleteMethod.new(__method__)
+      delimiter = data[pos, 3]
+      advance(3)
+      consume_line
+
+      # define line processing base on string type
+      process_line = if preserve_spaces
+        ->(content, line_indent) do
+          # strip required 2-space indent relative to key
+          required_indent = key_indent + 2
+          if content.length >= required_indent && space_string?(content[0, required_indent])
+            return content[required_indent..]
+          end
+
+          content
+        end
+      else
+        ->(content, _line_indent) { content.strip }
+      end
+
+      lines = []
+
+      until done?
+        line_starting_pos = pos
+        line_indent = 0
+
+        # count indentation
+        while !done? && data[pos] == " "
+          line_indent += 1
+          self.pos += 1
+        end
+
+        # check for closing delimiter
+        if peek_string(delimiter)
+          if line_indent != key_indent
+            raise error("multiline closing delimiter must be at same indentation as the key (#{key_indent} spaces)")
+          end
+
+          advance(3)
+          consume_line
+
+          return lines.join("\n")
+        end
+
+        # get line content
+        self.pos = line_starting_pos
+        line_content = consume_line_content
+        lines.push(process_line.call(line_content, line_indent))
+      end
+
+      raise error("unclosed multiline string")
     end
 
     # parses numbers in various formats: decimal, hex, octal, binary, float
@@ -408,7 +553,7 @@ module Huml
 
       NUMBER_BASE_PREFIXES.each do |prefix, base|
         if peek_string(prefix)
-          parse_base(starting_pos, base, prefix)
+          parse_base(start: starting_pos, base: base, prefix:)
         end
       end
 
@@ -436,11 +581,35 @@ module Huml
 
       # remove underscores and parse
       number_string = data[starting_pos...pos].delete("_")
-      float ? Float(number_string) : Integer(number_string)
+      begin
+        float ? Float(number_string) : Integer(number_string)
+      rescue ArgumentError => e
+        raise error("invalid number: #{e.message}")
+      end
     end
 
-    def parse_base
-      throw IncompleteMethod.new(__method__)
+    def parse_base(start:, base:, prefix:)
+      advance(prefix.length)
+      number_start = pos
+
+      validators = {
+        16 => ->(c) { hex?(c) },
+        8 => ->(c) { ("0".."7").cover?(c) },
+        2 => ->(c) { ["0", "1"].include?(c) }
+      }
+
+      while !done? && validators.fetch(base).call(data[pos])
+        advance(1)
+      end
+
+      if pos == number_start
+        raise error("invalid number literal, requires digits after prefix")
+      end
+
+      sign = (data[start] == "-") ? -1 : 1
+      number_string = data[number_start...pos].delete("_")
+
+      sign * Integer(number_string, base)
     end
 
     def skip_blank_lines
@@ -449,7 +618,7 @@ module Huml
         skip_spaces
 
         if done?
-          raise ParseError.new("trailing spaces are not allowed") if self.pos > line_start
+          raise error("trailing spaces are not allowed") if self.pos > line_start
           return
         end
 
@@ -458,7 +627,7 @@ module Huml
         end
 
         if data[self.pos] == "\n" && self.pos > line_start
-          raise ParseError.new("trailing spaces are not allowed")
+          raise error("trailing spaces are not allowed")
         end
 
         self.pos = line_start
@@ -472,20 +641,20 @@ module Huml
 
       if done? || data[self.pos] == "\n"
         if self.pos > content_start
-          raise ParseError.new("trailing spaces are not allowed")
+          raise error("trailing spaces are not allowed")
         end
       elsif data[self.pos] == "#"
         if self.pos == content_start && current_indent != self.pos - line_start
-          raise ParseError.new("a value must be separated from an inline comment by a space")
+          raise error("a value must be separated from an inline comment by a space")
         end
 
         self.pos += 1
         if !done? && ![" ", "\n"].include?(data[self.pos])
-          raise ParseError.new("comment hash '#' must be followed by a space")
+          raise error("comment hash '#' must be followed by a space")
         end
 
       else
-        raise ParseError.new("unexpected content at end of line")
+        raise error("unexpected content at end of line")
       end
 
       # NOTE: this section has been refactored
@@ -493,7 +662,7 @@ module Huml
       if next_new_line
         remaining_line = data[self.pos...next_new_line]
         if remaining_line.end_with?(" ") && remaining_line.length > 0
-          raise ParseError.new("trailing spaces are not allowed")
+          raise error("trailing spaces are not allowed")
         end
 
         self.pos = next_new_line + 1
@@ -504,23 +673,48 @@ module Huml
     end
 
     def consume_line_content
-      throw IncompleteMethod.new(__method__)
+      starting_pos = pos
+      next_newline = data.index("\n", pos)
+
+      if next_newline.nil?
+        # no more newlines, consume to end
+        content = data[starting_pos..]
+        self.pos = data.length
+        return content
+      end
+
+      content = data[starting_pos...next_newline]
+      self.pos = next_newline + 1
+      self.line += 1
+
+      content
     end
 
     def assert_space(context)
       if done? || data[pos] != " "
-        raise ParseError.new("expected single space #{context}")
+        raise error("expected single space #{context}")
       end
 
       advance(1)
 
       if !done? && data[pos] == " "
-        raise ParseError("expected signle space #{context}, found multiple")
+        raise error("expected signle space #{context}, found multiple")
       end
     end
 
     def expect_comma
-      throw IncompleteMethod.new(__method__)
+      skip_spaces
+
+      if done? || data[pos] != ","
+        raise error("expected a comma in inline collection")
+      end
+
+      if pos > 0 && data[pos - 1] == " "
+        raise error("no spaces allowed before comma")
+      end
+
+      advance(1)
+      assert_space("after comma")
     end
 
     def current_indent
@@ -556,7 +750,7 @@ module Huml
 
     def inline_dict?
       current_pos = pos
-      while current_pos < data.length && ["\n", "#"].include?(data[current_pos])
+      while current_pos < data.length && !["\n", "#"].include?(data[current_pos])
         if data[current_pos] == ":"
           if current_pos + 1 >= data.length || data[current_pos + 1] != ":"
             return true
@@ -568,9 +762,10 @@ module Huml
     end
 
     def inline_list_at_root?
-      line = data[self.pos...data.index("\n", self.pos)]
+      line_end = data.index("\n", self.pos) || data.length
+      line = data[self.pos...line_end]
       comment_index = line.index("#")
-      content = (comment_index >= 0) ? line[0...comment_index] : line
+      content = comment_index ? line[0...comment_index] : line
 
       content.include?(",") && !content.include?(":")
     end
@@ -643,15 +838,16 @@ module Huml
     end
 
     def hex?(character)
-      throw IncompleteMethod.new(__method__)
+      digit?(character) ||
+        ("a".."f").cover?(character.downcase)
     end
 
-    def space_string(string)
-      throw IncompleteMethod.new(__method__)
+    def space_string?(string)
+      string.strip == ""
     end
 
     def error(message)
-      throw IncompleteMethod.new(__method__)
+      ParseError.new(message, self.line)
     end
 
     def skip_first
