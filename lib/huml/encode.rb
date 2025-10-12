@@ -73,48 +73,25 @@ module Huml
       def to_array(arr, indent, lines, is_root_level = false)
         return lines[-1] += "[]" if arr.empty?
 
-        # For root level arrays, don't add extra indentation
         item_indent = is_root_level ? 0 : indent
 
         arr.each do |item|
           lines << "#{' ' * item_indent}- "
-
-          if vector?(item)
-            lines[-1] += "::"
-            to_value(item, item_indent + 2, lines)
-          else
-            to_value(item, item_indent, lines)
-          end
+          lines[-1] += "::" if vector?(item)
+          to_value(item, vector?(item) ? item_indent + 2 : item_indent, lines)
         end
       end
 
       # Encode an object value
       def to_object(obj, indent, lines, is_root_level = false)
-        entries = obj.to_a
-        return lines[-1] += "{}" if entries.empty?
+        return lines[-1] += "{}" if obj.empty?
 
-        # Sort keys for deterministic output
-        entries.sort_by! { |key, _| key.to_s }
-
-        # For root level objects, don't add extra indentation
-        key_indent = is_root_level ? 0 : indent
-
-        entries.each do |key, value|
-          write_key_value_pair(key, value, key_indent, lines)
+        obj.sort_by { |key, _| key.to_s }.each do |key, value|
+          key_indent = is_root_level ? 0 : indent
+          lines << "#{' ' * key_indent}#{quote_key(key)}"
+          lines[-1] += vector?(value) && value.empty? ? ":: " : (vector?(value) ? "::" : ": ")
+          to_value(value, key_indent + 2, lines)
         end
-      end
-
-      # Writes a key-value pair
-      def write_key_value_pair(key, value, indent, lines)
-        lines << "#{' ' * indent}#{quote_key(key)}"
-
-        lines[-1] += if vector?(value)
-          empty_vector?(value) ? ":: " : "::"
-        else
-          ": "
-        end
-
-        to_value(value, indent + 2, lines)
       end
 
       # Helper methods
@@ -122,11 +99,6 @@ module Huml
       # Determines if a value is a vector (array or object)
       def vector?(value)
         value.is_a?(Array) || value.is_a?(Hash)
-      end
-
-      # Determines if a vector is empty
-      def empty_vector?(value)
-        (value.is_a?(Array) || value.is_a?(Hash)) && value.empty?
       end
 
       # Quotes a key if necessary
