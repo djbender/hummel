@@ -2,18 +2,14 @@ require "json"
 
 module Huml
   module Encode
-    class << self
-      # Regular expression to validate bare keys (no quotes needed)
-      BARE_KEY_REGEX = /^[a-zA-Z][a-zA-Z0-9_-]*$/
+    # Regular expression to validate bare keys (no quotes needed)
+    BARE_KEY_REGEX = /^[a-zA-Z][a-zA-Z0-9_-]*$/
 
+    class << self
       # Convert a Ruby object to HUML format
       def stringify(obj, cfg = {})
         lines = []
-
-        if cfg[:include_version]
-          lines << "%HUML v0.1.0"
-          lines << ""
-        end
+        lines.concat(["%HUML v0.1.0", ""]) if cfg[:include_version]
 
         to_value(obj, 0, lines, true)
         lines << "" # Ensure document ends with newline
@@ -23,12 +19,11 @@ module Huml
 
       private
 
+      # Core encoding methods
+
       # Encode a value to HUML format
       def to_value(value, indent, lines, is_root_level = false)
-        if value.nil?
-          lines[-1] += "null"
-          return
-        end
+        return lines[-1] += "null" if value.nil?
 
         case value
         when TrueClass, FalseClass
@@ -42,9 +37,11 @@ module Huml
         when Hash
           to_object(value, indent, lines, is_root_level)
         else
-          raise "Unsupported type: #{value.class}"
+          raise ArgumentError, "Unsupported type: #{value.class}"
         end
       end
+
+      # Type-specific encoding methods
 
       # Format a number for HUML output
       def format_number(num)
@@ -57,40 +54,30 @@ module Huml
 
       # Encode a string value
       def to_string(str, indent, lines)
-        if str.include?("\n")
-          # Multi-line string
-          key_indent = indent - 2
-          content_indent = indent
-
-          lines[-1] += "```"
-          str_lines = str.split("\n")
-
-          # Remove empty last line if string ends with newline
-          str_lines.pop if str_lines[-1] == ""
-
-          str_lines.each do |line|
-            lines << (" " * content_indent) + line
-          end
-
-          lines << (" " * key_indent) + "```"
-        else
+        unless str.include?("\n")
           # Single-line string - use JSON for proper escaping
           lines[-1] += str.to_json
+          return
         end
+
+        # Multi-line string
+        lines[-1] += "```"
+        str_lines = str.split("\n")
+        str_lines.pop if str_lines.last&.empty? # Remove empty last line if string ends with newline
+
+        str_lines.each { |line| lines << "#{' ' * indent}#{line}" }
+        lines << "#{' ' * (indent - 2)}```"
       end
 
       # Encode an array value
       def to_array(arr, indent, lines, is_root_level = false)
-        if arr.empty?
-          lines[-1] += "[]"
-          return
-        end
+        return lines[-1] += "[]" if arr.empty?
 
         # For root level arrays, don't add extra indentation
         item_indent = is_root_level ? 0 : indent
 
         arr.each do |item|
-          lines << (" " * item_indent) + "- "
+          lines << "#{' ' * item_indent}- "
 
           if vector?(item)
             lines[-1] += "::"
@@ -104,11 +91,7 @@ module Huml
       # Encode an object value
       def to_object(obj, indent, lines, is_root_level = false)
         entries = obj.to_a
-
-        if entries.empty?
-          lines[-1] += "{}"
-          return
-        end
+        return lines[-1] += "{}" if entries.empty?
 
         # Sort keys for deterministic output
         entries.sort_by! { |key, _| key.to_s }
@@ -123,19 +106,18 @@ module Huml
 
       # Writes a key-value pair
       def write_key_value_pair(key, value, indent, lines)
-        lines << (" " * indent) + quote_key(key)
+        lines << "#{' ' * indent}#{quote_key(key)}"
 
-        is_vec = vector?(value)
-        is_empty = empty_vector?(value)
-
-        lines[-1] += if is_vec
-          is_empty ? ":: " : "::"
+        lines[-1] += if vector?(value)
+          empty_vector?(value) ? ":: " : "::"
         else
           ": "
         end
 
         to_value(value, indent + 2, lines)
       end
+
+      # Helper methods
 
       # Determines if a value is a vector (array or object)
       def vector?(value)
@@ -144,8 +126,7 @@ module Huml
 
       # Determines if a vector is empty
       def empty_vector?(value)
-        return value.empty? if value.is_a?(Array) || value.is_a?(Hash)
-        false
+        (value.is_a?(Array) || value.is_a?(Hash)) && value.empty?
       end
 
       # Quotes a key if necessary
