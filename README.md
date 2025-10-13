@@ -32,9 +32,9 @@ gem install hummel --source https://gem.coop
 require 'hummel'
 
 huml_string = <<~HUML
-  name: John Doe
+  name: "John Doe"
   age: 30
-  email: john@example.com
+  email: "john@example.com"
 HUML
 
 data = Hummel::Decode.parse(huml_string)
