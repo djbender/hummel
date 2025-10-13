@@ -515,7 +515,7 @@ module Hummel
 
       NUMBER_BASE_PREFIXES.each do |prefix, base|
         if peek_string(prefix)
-          parse_base(start: starting_pos, base: base, prefix:)
+          return parse_base(start: starting_pos, base: base, prefix:)
         end
       end
 
@@ -579,10 +579,7 @@ module Hummel
         line_start = self.pos
         skip_spaces
 
-        if done?
-          raise error("trailing spaces are not allowed") if self.pos > line_start
-          return
-        end
+        raise error("trailing spaces are not allowed") if done?
 
         if !["\n", "#"].include?(data[self.pos])
           return # Found content
@@ -714,7 +711,10 @@ module Hummel
       current_pos = pos
       while current_pos < data.length && !["\n", "#"].include?(data[current_pos])
         if data[current_pos] == ":"
-          if current_pos + 1 >= data.length || data[current_pos + 1] != ":"
+          # Check if this is the second colon in a :: pair
+          if current_pos > 0 && data[current_pos - 1] == ":"
+            # This is part of ::, skip it
+          elsif current_pos + 1 >= data.length || data[current_pos + 1] != ":"
             return true
           end
         end
@@ -733,12 +733,12 @@ module Hummel
     end
 
     def inline_dict_at_root?
-      line_end = data.index("\n", pos) || data.length
-      comment_index = data.index("#", pos) || data.length
+      line_end = data.index("\n", pos)
+      comment_index = data.index("#", pos)
 
       marker = [
-        line_end,
-        comment_index
+        line_end || data.length,
+        comment_index || data.length
       ].min
 
       line = data[pos...marker]
@@ -747,13 +747,15 @@ module Hummel
 
       return false unless has_colon && has_comma
 
-      remaining_content = if line_end != -1
-        data[0...line_end]
+      remaining_content = if line_end.nil?
+        # Single-line input, no subsequent lines
+        false
       else
-        data
-      end.split("\n")[1..].any? do |line|
-        trimmed = line.strip
-        trimmed && !trimmed.start_with?("#")
+        # Multi-line input, check if subsequent lines have non-comment content
+        data.split("\n")[1..].any? do |line|
+          trimmed = line.strip
+          trimmed && !trimmed.start_with?("#")
+        end
       end
 
       !remaining_content

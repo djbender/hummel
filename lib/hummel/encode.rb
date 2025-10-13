@@ -25,6 +25,7 @@ module Hummel
       def encode_value(value, indent, is_root_level = false)
         return ["null"] if value.nil?
 
+        # TODO: dynamic dispatch refactor?
         case value
         when TrueClass, FalseClass
           [value.to_s]
@@ -58,7 +59,6 @@ module Hummel
 
         # Multi-line string
         str_lines = str.split("\n")
-        str_lines.pop if str_lines.last && str_lines.last.empty?
 
         ["```"] + str_lines.map { |line| "#{" " * indent}#{line}" } + ["#{" " * (indent - 2)}```"]
       end

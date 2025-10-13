@@ -171,10 +171,37 @@ RSpec.describe Hummel::Decode do
       expect(result).to eq({"a" => 1, "b" => 2})
     end
 
+    it "rejects inline dict at root with non-comment content on following lines" do
+      expect {
+        Hummel::Decode.parse("a: 1, b: 2\nkey: value")
+      }.to raise_error(Hummel::Decode::Error, /unexpected content at end of line/)
+    end
+
     it "rejects inline dict missing comma" do
       expect {
         Hummel::Decode.parse("a: 1 b: 2")
       }.to raise_error(Hummel::Decode::Error)
+    end
+
+    it "parses positive hex number" do
+      result = Hummel::Decode.parse("0x10")
+      expect(result).to eq(16)
+    end
+
+    it "parses negative hex number" do
+      result = Hummel::Decode.parse("val: -0x10")
+      expect(result).to eq({"val" => -16})
+    end
+
+    it "handles %HUML with space but no version" do
+      result = Hummel::Decode.parse("%HUML \n1")
+      expect(result).to eq(1)
+    end
+
+    it "breaks on EOF in skip_blank_lines loop" do
+      parser = Hummel::Parser.new("1\n")
+      result = parser.parse
+      expect(result).to eq(1)
     end
   end
 end

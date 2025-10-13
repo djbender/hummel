@@ -62,6 +62,19 @@ RSpec.describe Hummel::Encode do
       result = Hummel::Encode.stringify({"test_key" => 1})
       expect(result).to include("test_key: 1")
     end
+
+    it "encodes multiline string without trailing empty line" do
+      obj = {"key" => "line1\nline2"}
+      result = Hummel::Encode.stringify(obj)
+      decoded = Hummel::Decode.parse(result)
+      expect(decoded["key"]).to eq("line1\nline2")
+    end
+
+    it "encodes root-level array" do
+      result = Hummel::Encode.stringify([1, 2, 3])
+      decoded = Hummel::Decode.parse(result)
+      expect(decoded).to eq([1, 2, 3])
+    end
   end
 end
 
