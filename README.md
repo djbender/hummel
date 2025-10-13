@@ -1,6 +1,8 @@
 # hummel
 
-An experimental HUML parser implementation in ruby.
+An HUML parser implementation in ruby.
+
+> **Note:** The gem is named `hummel` because `huml` was already taken on rubygems.org.
 
 ## Installation
 
