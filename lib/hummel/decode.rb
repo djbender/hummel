@@ -711,12 +711,7 @@ module Hummel
       current_pos = pos
       while current_pos < data.length && !["\n", "#"].include?(data[current_pos])
         if data[current_pos] == ":"
-          # Check if this is the second colon in a :: pair
-          if current_pos > 0 && data[current_pos - 1] == ":"
-            # This is part of ::, skip it
-          elsif current_pos + 1 >= data.length || data[current_pos + 1] != ":"
-            return true
-          end
+          return true
         end
         current_pos += 1
       end
@@ -815,8 +810,6 @@ module Hummel
     end
 
     def skip_first
-      return unless block_given?
-
       @first = true if @first.nil?
       yield unless @first
       @first = false
