@@ -1,38 +1,88 @@
-# Huml
+# hummel
 
-TODO: Delete this and the text below, and describe your gem
-
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/huml`. To experiment with that code, run `bin/console` for an interactive prompt.
+An experimental HUML parser implementation in ruby.
 
 ## Installation
 
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
+Add this line to your application's Gemfile:
 
-Install the gem and add to the application's Gemfile by executing:
-
-```bash
-bundle add UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+```ruby
+gem 'hummel', source: 'https://gem.coop'
 ```
 
-If bundler is not being used to manage dependencies, install the gem by executing:
+And then execute:
 
 ```bash
-gem install UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+bundle install
+```
+
+Or install it yourself as:
+
+```bash
+gem install hummel --source https://gem.coop
 ```
 
 ## Usage
 
-TODO: Write usage instructions here
+### Parsing HUML
+
+```ruby
+require 'hummel'
+
+huml_string = <<~HUML
+  name: John Doe
+  age: 30
+  email: john@example.com
+HUML
+
+data = Hummel::Decode.parse(huml_string)
+# => {"name"=>"John Doe", "age"=>30, "email"=>"john@example.com"}
+```
+
+### Encoding to HUML
+
+```ruby
+require 'hummel'
+
+data = {
+  name: "John Doe",
+  age: 30,
+  hobbies: ["reading", "coding", "hiking"]
+}
+
+huml_string = Hummel::Encode.stringify(data)
+puts huml_string
+# Output:
+# age: 30
+# hobbies::
+#   - reading
+#   - coding
+#   - hiking
+# name: John Doe
+```
+
+### Options
+
+You can include the HUML version header when encoding:
+
+```ruby
+Hummel::Encode.stringify(data, include_version: true)
+# Output:
+# %HUML v0.1.0
+#
+# age: 30
+# ...
+```
 
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [gem.coop](https://gem.coop).
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/huml. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/[USERNAME]/huml/blob/main/CODE_OF_CONDUCT.md).
+Bug reports and pull requests are welcome on GitHub at https://github.com/djbender/hummel. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/djbender/hummel/blob/main/CODE_OF_CONDUCT.md).
 
 ## License
 
@@ -40,4 +90,4 @@ The gem is available as open source under the terms of the [MIT License](https:/
 
 ## Code of Conduct
 
-Everyone interacting in the Huml project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/huml/blob/main/CODE_OF_CONDUCT.md).
+Everyone interacting in the Hummel project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/djbender/hummel/blob/main/CODE_OF_CONDUCT.md).

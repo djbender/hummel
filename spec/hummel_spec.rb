@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-RSpec.describe Huml do
+RSpec.describe Hummel do
   it "has a version number" do
-    expect(Huml::VERSION).not_to be nil
+    expect(Hummel::VERSION).not_to be nil
   end
 end

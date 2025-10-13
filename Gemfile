@@ -2,7 +2,6 @@
 
 source "https://gem.coop"
 
-# Specify your gem's dependencies in huml.gemspec
 gemspec
 
 group :development do

@@ -1,4 +1,4 @@
-module Huml
+module Hummel
   module Decode
     def self.parse(input)
       parser = Parser.new(input)
@@ -9,7 +9,7 @@ module Huml
   end
 
   class Parser
-    class ParseError < Huml::Decode::Error
+    class ParseError < Hummel::Decode::Error
       attr_reader :line
 
       def initialize(message, line)

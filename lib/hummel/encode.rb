@@ -1,6 +1,6 @@
 require "json"
 
-module Huml
+module Hummel
   module Encode
     # Regular expression to validate bare keys (no quotes needed)
     BARE_KEY_REGEX = /^[a-zA-Z][a-zA-Z0-9_-]*$/

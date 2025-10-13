@@ -1,18 +1,18 @@
 require "spec_helper"
 require "json"
 
-RSpec.describe Huml::Encode do
+RSpec.describe Hummel::Encode do
   context "TestEncodeDoc" do
     it "encodes and re-parses mixed.huml correctly" do
       # Read source data as HUML
       huml_content = File.read("./tests/documents/mixed.huml")
-      res_huml = Huml::Decode.parse(huml_content)
+      res_huml = Hummel::Decode.parse(huml_content)
 
       # Marshal it back to HUML
-      encoded = Huml::Encode.stringify(res_huml)
+      encoded = Hummel::Encode.stringify(res_huml)
 
       # Read it again using the HUML parser
-      res_huml_converted = Huml::Decode.parse(encoded)
+      res_huml_converted = Hummel::Decode.parse(encoded)
       out = normalize_to_json(res_huml_converted)
 
       # Read test.json and parse it
@@ -26,22 +26,22 @@ RSpec.describe Huml::Encode do
 
   context "Branch coverage tests" do
     it "includes version header when include_version is true" do
-      result = Huml::Encode.stringify("test", include_version: true)
+      result = Hummel::Encode.stringify("test", include_version: true)
       expect(result).to start_with("%HUML v0.1.0\n")
     end
 
     it "encodes NaN correctly" do
-      result = Huml::Encode.stringify(Float::NAN)
+      result = Hummel::Encode.stringify(Float::NAN)
       expect(result).to include("nan")
     end
 
     it "encodes positive infinity correctly" do
-      result = Huml::Encode.stringify(Float::INFINITY)
+      result = Hummel::Encode.stringify(Float::INFINITY)
       expect(result).to include("inf")
     end
 
     it "encodes negative infinity correctly" do
-      result = Huml::Encode.stringify(-Float::INFINITY)
+      result = Hummel::Encode.stringify(-Float::INFINITY)
       expect(result).to include("-inf")
     end
   end

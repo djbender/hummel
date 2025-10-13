@@ -1,24 +1,24 @@
 # frozen_string_literal: true
 
-require_relative "lib/huml/version"
+require_relative "lib/hummel/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "huml"
-  spec.version = Huml::VERSION
+  spec.name = "hummel"
+  spec.version = Hummel::VERSION
   spec.authors = ["Derek Bender"]
   spec.email = ["170351+djbender@users.noreply.github.com"]
 
-  spec.summary = "TODO: Write a short summary, because RubyGems requires one."
-  spec.description = "TODO: Write a longer description or delete this line."
-  spec.homepage = "TODO: Put your gem's website or public repo URL here."
+  spec.summary = "A Ruby parser and encoder for HUML (Human Markup Language)"
+  spec.description = "HUML (Human Markup Language) is a data serialization format designed for human readability. This gem provides a complete Ruby implementation including a parser for decoding HUML documents and an encoder for converting Ruby objects to HUML format."
+  spec.homepage = "https://github.com/djbender/hummel"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1.0"
 
-  spec.metadata["allowed_push_host"] = "TODO: Set to your gem server 'https://example.com'"
+  spec.metadata["allowed_push_host"] = "https://gem.coop"
 
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "TODO: Put your gem's public repo URL here."
-  spec.metadata["changelog_uri"] = "TODO: Put your gem's CHANGELOG.md URL here."
+  spec.metadata["source_code_uri"] = "https://github.com/djbender/hummel"
+  spec.metadata["changelog_uri"] = "https://github.com/djbender/hummel/blob/main/CHANGELOG.md"
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
