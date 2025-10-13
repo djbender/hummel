@@ -6,6 +6,12 @@ on:
       - main
 
   pull_request:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 'Git SHA to Run'
+        required: false
+        type: string
 
 jobs:
   build:
@@ -21,6 +27,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.sha || github.sha}}
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -32,3 +40,10 @@ jobs:
 
       - name: Run the default task
         run: bundle exec rake
+
+      - name: Upload coverage results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage
