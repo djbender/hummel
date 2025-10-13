@@ -44,6 +44,24 @@ RSpec.describe Hummel::Encode do
       result = Hummel::Encode.stringify(-Float::INFINITY)
       expect(result).to include("-inf")
     end
+
+    it "raises error for unsupported type" do
+      expect {
+        Hummel::Encode.stringify(Object.new)
+      }.to raise_error(ArgumentError, /Unsupported type/)
+    end
+
+    it "encodes multiline string with trailing empty line" do
+      obj = {"key" => "line1\nline2\n"}
+      result = Hummel::Encode.stringify(obj)
+      decoded = Hummel::Decode.parse(result)
+      expect(decoded["key"]).to eq("line1\nline2")
+    end
+
+    it "encodes bare key correctly" do
+      result = Hummel::Encode.stringify({"test_key" => 1})
+      expect(result).to include("test_key: 1")
+    end
   end
 end
 

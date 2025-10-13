@@ -12,3 +12,5 @@
 
 # rubygems ignore Gemfile.lock
 /Gemfile.lock
+
+/*.gem

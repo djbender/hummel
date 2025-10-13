@@ -102,9 +102,9 @@ RSpec.describe Hummel::Decode do
       }.to raise_error(Hummel::Decode::Error, /trailing spaces/)
     end
 
-    xit "rejects trailing spaces at end of comment" do
+    it "rejects trailing spaces at end of comment" do
       expect {
-        Hummel::Decode.parse("# comment  ")
+        Hummel::Decode.parse("1 # comment  \n")
       }.to raise_error(Hummel::Decode::Error, /trailing spaces/)
     end
 
@@ -113,9 +113,9 @@ RSpec.describe Hummel::Decode do
       expect(result).to eq("test")
     end
 
-    xit "rejects invalid key in inline dict" do
+    it "rejects invalid key in inline dict" do
       expect {
-        Hummel::Decode.parse("foo::  123")
+        Hummel::Decode.parse("a: 1, b 2")
       }.to raise_error(Hummel::Decode::Error, /expected ':' in inline dict/)
     end
 
@@ -143,21 +143,21 @@ RSpec.describe Hummel::Decode do
       expect(result).to eq([1])
     end
 
-    xit "rejects missing colon after key in inline dict within vector" do
+    it "rejects missing colon after key in inline dict within vector" do
       expect {
-        Hummel::Decode.parse("foo::  bar")
+        Hummel::Decode.parse("foo:: a: 1, b 2")
       }.to raise_error(Hummel::Decode::Error, /expected ':' in inline dict/)
     end
 
-    xit "rejects line with trailing spaces after content" do
+    it "rejects line with trailing spaces after content" do
       expect {
-        Hummel::Decode.parse("key: value # comment  \n")
+        Hummel::Decode.parse("key: 1 # comment  \n")
       }.to raise_error(Hummel::Decode::Error, /trailing spaces/)
     end
 
-    xit "rejects missing comma between inline list items" do
+    it "rejects missing comma between inline list items" do
       expect {
-        Hummel::Decode.parse("foo::  1 2")
+        Hummel::Decode.parse("foo:: 1x")
       }.to raise_error(Hummel::Decode::Error, /expected a comma/)
     end
 
@@ -169,6 +169,12 @@ RSpec.describe Hummel::Decode do
     it "handles inline dict at root without following content" do
       result = Hummel::Decode.parse("a: 1, b: 2")
       expect(result).to eq({"a" => 1, "b" => 2})
+    end
+
+    it "rejects inline dict missing comma" do
+      expect {
+        Hummel::Decode.parse("a: 1 b: 2")
+      }.to raise_error(Hummel::Decode::Error)
     end
   end
 end
