@@ -9,7 +9,7 @@ An HUML parser implementation in ruby.
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'hummel', source: 'https://gem.coop'
+gem 'hummel'
 ```
 
 And then execute:
@@ -21,7 +21,7 @@ bundle install
 Or install it yourself as:
 
 ```bash
-gem install hummel --source https://gem.coop
+gem install hummel
 ```
 
 ## Usage
@@ -80,7 +80,7 @@ Hummel::Encode.stringify(data, include_version: true)
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [gem.coop](https://gem.coop).
+To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
 ## Contributing
 
