@@ -80,7 +80,24 @@ Hummel::Encode.stringify(data, include_version: true)
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+To install this gem onto your local machine, run `bin/rake install`.
+
+To release a new version:
+
+1. Run tests and linters: `bin/rake` and address any issues in separate commits.
+2. Update the version number in `lib/hummel/version.rb`.
+3. Update the `CHANGELOG.md` to include this version and brief summaries of changes.
+4. Commit changes:
+
+    git add lib/hummel/version.rb CHANGELOG.md
+    git commit -m "Bump version to 0.2.0"
+
+5. Run `bin/rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+6. Create a GitHub Release from the tag with the CHANGELOG.md notes.
+
+**Note**: In follow up commits to this release please re-add the [Unreleased] section to CHANGELOG.md for future work.
+
+**Note**: Make sure you're authed with rubygems.org via `gem signin` before running the release command.
 
 ## Contributing
 
