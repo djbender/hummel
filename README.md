@@ -89,8 +89,8 @@ To release a new version:
 3. Update the `CHANGELOG.md` to include this version and brief summaries of changes.
 4. Commit changes:
 
-    git add lib/hummel/version.rb CHANGELOG.md
-    git commit -m "Bump version to 0.2.0"
+        git add lib/hummel/version.rb CHANGELOG.md
+        git commit -m "Bump version to 0.2.0"
 
 5. Run `bin/rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 6. Create a GitHub Release from the tag with the CHANGELOG.md notes.
