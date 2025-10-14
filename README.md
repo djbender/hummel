@@ -1,8 +1,6 @@
-# hummel
+# Hummel
 
-An HUML parser implementation in ruby.
-
-> **Note:** The gem is named `hummel` because `huml` was already taken on rubygems.org.
+An [HUML](https://huml.io) parser implementation in ruby.
 
 ## Installation
 
@@ -95,9 +93,9 @@ To release a new version:
 5. Run `bin/rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 6. Create a GitHub Release from the tag with the CHANGELOG.md notes.
 
-**Note**: In follow up commits to this release please re-add the [Unreleased] section to CHANGELOG.md for future work.
+> **Note**: In follow up commits to this release please re-add the [Unreleased] section to CHANGELOG.md for future work.
 
-**Note**: Make sure you're authed with rubygems.org via `gem signin` before running the release command.
+> **Note**: Make sure you're authed with rubygems.org via `gem signin` before running the release command.
 
 ## Contributing
 
@@ -110,3 +108,7 @@ The gem is available as open source under the terms of the [MIT License](https:/
 ## Code of Conduct
 
 Everyone interacting in the Hummel project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/djbender/hummel/blob/main/CODE_OF_CONDUCT.md).
+
+## Name
+
+This gem is named `hummel` because `huml` was already taken on [rubygems.org](https://rubygems.org).
