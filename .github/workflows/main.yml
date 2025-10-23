@@ -45,6 +45,7 @@ jobs:
         env:
           LIZARD_URL: ${{ secrets.LIZARD_URL }}
           LIZARD_API_KEY: ${{ secrets.LIZARD_API_KEY }}
+          LIZARD_REPORT: ${{ matrix.ruby == '3.4.7' }}
         run: bundle exec rake
 
       - name: Upload coverage results
