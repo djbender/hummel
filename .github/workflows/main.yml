@@ -42,6 +42,9 @@ jobs:
       - run: git submodule update --init
 
       - name: Run the default task
+        env:
+          LIZARD_URL: ${{ secrets.LIZARD_URL }}
+          LIZARD_API_KEY: ${{ secrets.LIZARD_API_KEY }}
         run: bundle exec rake
 
       - name: Upload coverage results
