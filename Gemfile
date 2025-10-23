@@ -17,5 +17,5 @@ group :development, :test do
 end
 
 group :test do
-  gem "lizard", "~> 0.1.0", github: "djbender/lizard-ruby", require: false
+  gem "lizard", branch: :main, github: "djbender/lizard-ruby", require: false
 end
