@@ -15,3 +15,7 @@ group :development, :test do
   gem "simplecov", "~> 0.22.0"
   gem "rspec", "~> 3.0"
 end
+
+group :test do
+  gem "lizard", "~> 0.1.0", github: "djbender/lizard-ruby", require: false
+end
