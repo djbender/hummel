@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "simplecov"
-if ENV.fetch("LIZARD_API_KEY") && ENV.fetch("LIZARD_URL")
+if ENV.fetch("LIZARD_API_KEY", false) && ENV.fetch("LIZARD_URL", false)
   require "lizard"
 end
 
@@ -26,7 +26,7 @@ RSpec.configure do |config|
   # disable warning on potential false positives
   RSpec::Expectations.configuration.warn_about_potential_false_positives = false
 
-  if ENV.fetch("LIZARD_API_KEY") && ENV.fetch("LIZARD_URL")
+  if ENV.fetch("LIZARD_API_KEY", false) && ENV.fetch("LIZARD_URL", false)
     config.add_formatter(Lizard::RSpecFormatter)
   end
 end

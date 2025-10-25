@@ -12,10 +12,10 @@ group :development do
 end
 
 group :development, :test do
-  gem "simplecov", "~> 0.22.0"
   gem "rspec", "~> 3.0"
 end
 
 group :test do
   gem "lizard", branch: :main, github: "djbender/lizard-ruby", require: false
+  gem "simplecov", "~> 0.22.0"
 end
