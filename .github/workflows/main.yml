@@ -1,11 +1,11 @@
-name: Ruby
+name: CI
 
 on:
   push:
-    branches:
-      - main
-
+    branches-ignore:
+      - "dependabot/**"
   pull_request:
+    types: [labeled]
   workflow_dispatch:
     inputs:
       sha:
@@ -27,11 +27,14 @@ jobs:
           - '3.3.9'
           - '3.4.7'
           - head
-
+    if: >
+      contains(github.event.pull_reqeust.labels.*.name, 'dependencies')
+      || github.event_name == 'push'
+      || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ inputs.sha || github.sha}}
+          ref: ${{ inputs.sha || github.event.pull_request.head.sha || '' }}
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
