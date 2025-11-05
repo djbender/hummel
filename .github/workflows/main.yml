@@ -5,7 +5,8 @@ on:
     branches:
       - main
 
-  pull_request:
+  pull_request_target:
+    types: [labeled]
   workflow_dispatch:
     inputs:
       sha:
@@ -31,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ inputs.sha || github.sha}}
+          ref: ${{ inputs.sha || github.event.pull_request.head.sha || '' }}
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
