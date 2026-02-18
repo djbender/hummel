@@ -9,7 +9,7 @@ module Hummel
       # Convert a Ruby object to HUML format
       def stringify(obj, cfg = {})
         lines = []
-        lines.concat(["%HUML v0.1.0", ""]) if cfg[:include_version]
+        lines.concat(["%HUML v0.2.0", ""]) if cfg[:include_version]
 
         lines.concat(encode_value(obj, 0, true))
         lines << "" # Ensure document ends with newline
@@ -60,7 +60,7 @@ module Hummel
         # Multi-line string
         str_lines = str.split("\n")
 
-        ["```"] + str_lines.map { |line| "#{" " * indent}#{line}" } + ["#{" " * (indent - 2)}```"]
+        ['"""'] + str_lines.map { |line| "#{" " * indent}#{line}" } + ["#{" " * (indent - 2)}\"\"\""]
       end
 
       # Encode an array value - returns array of lines

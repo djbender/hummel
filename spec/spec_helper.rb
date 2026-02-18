@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+unless Dir.exist?(File.expand_path("../tests/documents", __dir__))
+  abort "Test fixtures not found. Run: git submodule update --init"
+end
+
 require "simplecov"
 if ENV.fetch("LIZARD_API_KEY", false) && ENV.fetch("LIZARD_URL", false)
   require "lizard"

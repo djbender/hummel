@@ -78,8 +78,8 @@ module Hummel
 
           if pos > starting_pos
             version = data[starting_pos...pos]
-            if version != "v0.1.0"
-              raise error("unsupported version '#{version}'. expected 'v0.1.0'")
+            if version != "v0.2.0"
+              raise error("unsupported version '#{version}'. expected 'v0.2.0'")
             end
           end
         end
@@ -178,7 +178,7 @@ module Hummel
         result[key] = if indicator == ":"
           assert_space("after ':'")
 
-          multiline = peek_string("```") || peek_string('""""')
+          multiline = peek_string('"""')
 
           value = parse_value(current_indent)
 
@@ -248,6 +248,10 @@ module Hummel
 
         vector_type = multiline_vector_type(indent)
         next_indent = current_indent
+
+        if next_indent != indent
+          raise error("bad indent #{next_indent}, expected #{indent}")
+        end
 
         parse_multiline_method = method(:"parse_multiline_#{vector_type}")
         return parse_multiline_method.call(next_indent)
@@ -364,11 +368,11 @@ module Hummel
       character = data[self.pos]
 
       if character == '"'
-        return peek_string('"""') ? parse_multiline_string(key_indent, false) : parse_string
+        return peek_string('"""') ? parse_multiline_string(key_indent) : parse_string
       end
 
       if character == "`" && peek_string("```")
-        return parse_multiline_string(key_indent, true)
+        raise error("backtick multiline strings are not supported in HUML v0.2.0")
       end
 
       SPECIAL_VALUES.each do |string, value|
@@ -450,24 +454,19 @@ module Hummel
       raise error("unclosed string")
     end
 
-    def parse_multiline_string(key_indent, preserve_spaces)
+    def parse_multiline_string(key_indent)
       delimiter = data[pos, 3]
       advance(3)
       consume_line
 
-      # define line processing base on string type
-      process_line = if preserve_spaces
-        ->(content, line_indent) do
-          # strip required 2-space indent relative to key
-          required_indent = key_indent + 2
-          if content.length >= required_indent && space_string?(content[0, required_indent])
-            return content[required_indent..]
-          end
-
-          content
+      # strip required 2-space indent relative to key
+      required_indent = key_indent + 2
+      process_line = ->(content, _line_indent) do
+        if content.length >= required_indent && space_string?(content[0, required_indent])
+          return content[required_indent..]
         end
-      else
-        ->(content, _line_indent) { content.strip }
+
+        content
       end
 
       lines = []
