@@ -45,7 +45,7 @@ RSpec.describe Hummel::Decode do
   context "Branch coverage tests" do
     it "rejects unsupported HUML version" do
       expect {
-        Hummel::Decode.parse("%HUML v0.2.0\ntest")
+        Hummel::Decode.parse("%HUML v0.9.9\ntest")
       }.to raise_error(Hummel::Decode::Error, /unsupported version/)
     end
 

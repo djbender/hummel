@@ -27,7 +27,7 @@ RSpec.describe Hummel::Encode do
   context "Branch coverage tests" do
     it "includes version header when include_version is true" do
       result = Hummel::Encode.stringify("test", include_version: true)
-      expect(result).to start_with("%HUML v0.1.0\n")
+      expect(result).to start_with("%HUML v0.2.0\n")
     end
 
     it "encodes NaN correctly" do
