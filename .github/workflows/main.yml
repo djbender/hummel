@@ -26,7 +26,7 @@ jobs:
             allow-failures: true
     continue-on-error: ${{ matrix.allow-failures || false }}
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@v7.0.1
         with:
           submodules: true
 
