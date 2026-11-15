@@ -7,7 +7,7 @@ gemspec
 group :development do
   gem "pry-byebug"
   gem "rake", "~> 13.0"
-  gem "standard", "1.51.1"
+  gem "standard", "1.57.0"
 end
 
 group :development, :test do
