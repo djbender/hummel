@@ -339,11 +339,11 @@ module Hummel
         self.pos += 1
       end
 
-      if self.pos == start
+      if pos == start
         raise error("expected a key")
       end
 
-      data[start...self.pos]
+      data[start...pos]
     end
 
     def parse_indicator
@@ -365,7 +365,7 @@ module Hummel
       if done?
         raise error("unexpected end of input, expected a value")
       end
-      character = data[self.pos]
+      character = data[pos]
 
       if character == '"'
         return peek_string('"""') ? parse_multiline_string(key_indent) : parse_string
@@ -389,7 +389,7 @@ module Hummel
           return Float::INFINITY
         end
 
-        if digit?(peek_char(self.pos))
+        if digit?(peek_char(pos))
           self.pos -= 1
           return parse_number
         end
@@ -403,7 +403,7 @@ module Hummel
           return -Float::INFINITY
         end
 
-        if digit?(peek_char(self.pos))
+        if digit?(peek_char(pos))
           self.pos -= 1
           return parse_number
         end
@@ -575,16 +575,16 @@ module Hummel
 
     def skip_blank_lines
       until done?
-        line_start = self.pos
+        line_start = pos
         skip_spaces
 
         raise error("trailing spaces are not allowed") if done?
 
-        if !["\n", "#"].include?(data[self.pos])
+        if !["\n", "#"].include?(data[pos])
           return # Found content
         end
 
-        if data[self.pos] == "\n" && self.pos > line_start
+        if data[pos] == "\n" && pos > line_start
           raise error("trailing spaces are not allowed")
         end
 
@@ -594,20 +594,20 @@ module Hummel
     end
 
     def consume_line
-      content_start = self.pos
+      content_start = pos
       skip_spaces
 
-      if done? || data[self.pos] == "\n"
-        if self.pos > content_start
+      if done? || data[pos] == "\n"
+        if pos > content_start
           raise error("trailing spaces are not allowed")
         end
-      elsif data[self.pos] == "#"
-        if self.pos == content_start && current_indent != self.pos - line_start
+      elsif data[pos] == "#"
+        if pos == content_start && current_indent != pos - line_start
           raise error("a value must be separated from an inline comment by a space")
         end
 
         self.pos += 1
-        if !done? && ![" ", "\n"].include?(data[self.pos])
+        if !done? && ![" ", "\n"].include?(data[pos])
           raise error("comment hash '#' must be followed by a space")
         end
 
@@ -616,9 +616,9 @@ module Hummel
       end
 
       # NOTE: this section has been refactored
-      next_new_line = data.index("\n", self.pos)
+      next_new_line = data.index("\n", pos)
       if next_new_line
-        remaining_line = data[self.pos...next_new_line]
+        remaining_line = data[pos...next_new_line]
         if remaining_line.end_with?(" ") && remaining_line.length > 0
           raise error("trailing spaces are not allowed")
         end
@@ -686,20 +686,20 @@ module Hummel
     end
 
     def line_start
-      if self.pos > 0 && self.pos <= data.length && data[self.pos - 1] == "\n"
-        self.pos
+      if pos > 0 && pos <= data.length && data[pos - 1] == "\n"
+        pos
       else
-        return 0 if self.pos <= 0 # prevent -1 array access wrap arounds
+        return 0 if pos <= 0 # prevent -1 array access wrap arounds
 
-        last_newline = data.rindex("\n", self.pos - 1)
+        last_newline = data.rindex("\n", pos - 1)
         last_newline ? last_newline + 1 : 0
       end
     end
 
     def key_value_pair?
-      current_pos = self.pos
+      current_pos = pos
       parse_key
-      !done? && data[self.pos] == ":"
+      !done? && data[pos] == ":"
     rescue ParseError
       false
     ensure
@@ -718,8 +718,8 @@ module Hummel
     end
 
     def inline_list_at_root?
-      line_end = data.index("\n", self.pos) || data.length
-      line = data[self.pos...line_end]
+      line_end = data.index("\n", pos) || data.length
+      line = data[pos...line_end]
       comment_index = line.index("#")
       content = comment_index ? line[0...comment_index] : line
 
@@ -760,7 +760,7 @@ module Hummel
     end
 
     def done?
-      self.pos >= data.length
+      pos >= data.length
     end
 
     def advance(amount)
@@ -768,14 +768,14 @@ module Hummel
     end
 
     def skip_spaces
-      while !done? && data[self.pos] == " "
+      while !done? && data[pos] == " "
         advance(1)
       end
     end
 
     def peek_string(string)
       # really unsure if the start_with? is correct
-      self.pos + string.length <= data.length && data[self.pos..].start_with?(string)
+      pos + string.length <= data.length && data[pos..].start_with?(string)
     end
 
     def peek_char(position)
@@ -805,7 +805,7 @@ module Hummel
     end
 
     def error(message)
-      ParseError.new(message, self.line)
+      ParseError.new(message, line)
     end
 
     def skip_first
